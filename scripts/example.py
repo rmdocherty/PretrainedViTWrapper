@@ -1,27 +1,40 @@
+import matplotlib.pyplot as plt
 from PIL import Image
 from torch import no_grad
 
 from PVW import BackboneConfig, BackboneRegistry, PretrainedViTWrapper
-from PVW.utils import to_numpy, do_pca
+from PVW.utils import do_pca, to_numpy
 
-import matplotlib.pyplot as plt
-
-
-backbone_cfg = BackboneConfig(
-    backbone_type="torch_hub",
-    model_arch="EUPE_s",
-    model_conf_path="models/EUPE",
-    checkpoint_path="../dino-saw/trained_models/EUPE-ViT-S.pt",
-)
+# backbone_cfg = BackboneConfig(
+#     backbone_type="torch_hub",
+#     model_arch="EUPE_s",
+#     model_conf_path="models/EUPE",
+#     checkpoint_path="../dino-saw/trained_models/EUPE-ViT-S.pt",
+# )
 # backbone_cfg = BackboneConfig(
 #     backbone_type="torch_hub",
 #     model_arch="dinov3_s+",
 #     model_conf_path="models/dinov3",
 #     checkpoint_path="../dino-saw/trained_models/dinov3_vits_patch16_plus_reg4.pth",
 # )
+
+# backbone_cfg = BackboneConfig(
+#     backbone_type="timm",
+#     model_arch="sam_b",
+#     # model_conf_path="models/EUPE",
+#     # checkpoint_path="../dino-saw/trained_models/EUPE-ViT-S.pt",
+#     pretrained=False
+# )
+backbone_cfg = BackboneConfig(
+    backbone_type="timm",
+    model_arch="convnext",
+    # model_conf_path="models/EUPE",
+    # checkpoint_path="../dino-saw/trained_models/EUPE-ViT-S.pt",
+    pretrained=False
+)
 backbone = BackboneRegistry.build(backbone_cfg)
 
-pvt = PretrainedViTWrapper(backbone, device="cuda", name="dinov3_s", arch_name="dinov3_s")
+pvt = PretrainedViTWrapper(backbone, device="cuda", name="SAMB", arch_name="dinov3_s")
 
 img = Image.open("tests/data/ni_superalloy.png").convert("RGB")
 

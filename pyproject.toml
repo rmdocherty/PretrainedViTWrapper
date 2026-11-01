@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "PretrainedViTWrapper"
-version = "0.0.3"
+version = "0.0.4"
 authors = [
   { name="Ronan Docherty", email="ronan.docherty18@imperial.ac.uk"},
 ]
@@ -27,11 +27,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pytest",
-  "matplotlib"
-]
-models = [
-  "torchmetrics",
-  "termcolor"
+  "matplotlib",
+  "ruff"
 ]
 
 [project.urls]

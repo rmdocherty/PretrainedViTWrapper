@@ -1,23 +1,26 @@
+from collections.abc import Callable
+from dataclasses import dataclass, field, fields, replace
+from functools import partial
+from inspect import Parameter, signature
+from typing import Any, Literal
+
 import torch
 from timm import create_model
 
-from dataclasses import dataclass, field, fields, replace
-from inspect import signature, Parameter
-from typing import Literal, Type, Callable, Any, Dict
-from functools import partial
+from PVW.types import TimmStyleViTForwardIntermediates
 
+from .modifications import change_stride, replace_pos_embed
 from .types import (
-    Architectures,
+    ARCHS_TO_LOCAL_IDS,
     ARCHS_TO_TIMM_IDS,
-    ViTBackbone,
+    Architectures,
+    Dv3StyleViT,
     ImageTransform,
     ModificationFn,
+    TimmStyleViTGetIntermediates,
+    ViTBackbone,
     satisfies_protocol,
-    ARCHS_TO_LOCAL_IDS,
-    TimmViT,
-    Dv3ViT,
 )
-from .modifications import change_stride, replace_pos_embed
 from .utils import closest_resize, logger
 from .wrapper import PretrainedViTWrapper
 
@@ -46,8 +49,8 @@ class BackboneConfig:
 @dataclass
 class WrapperConfig:
     backbone_cfg: BackboneConfig
-    wrapper_class: Type[PretrainedViTWrapper] = PretrainedViTWrapper
-    wrapper_kwargs: Dict[str, Any] = field(default_factory=dict)
+    wrapper_class: type[PretrainedViTWrapper] = PretrainedViTWrapper
+    wrapper_kwargs: dict[str, Any] = field(default_factory=dict)
     transform: ImageTransform = closest_resize
     dtype: torch.dtype = torch.float32
 
@@ -84,7 +87,7 @@ def _maybe_apply_mods_and_load_checkpoint(vit: ViTBackbone, cfg: BackboneConfig)
     return vit
 
 
-def create_timm_backbone(cfg: BackboneConfig) -> TimmViT:
+def create_timmget_backbone(cfg: BackboneConfig) -> TimmStyleViTGetIntermediates:
     model_identifier = ARCHS_TO_TIMM_IDS[cfg.model_arch]
     if "sam" in model_identifier or "conv" in model_identifier:
         vit = create_model(
@@ -99,7 +102,30 @@ def create_timm_backbone(cfg: BackboneConfig) -> TimmViT:
             dynamic_img_pad=cfg.dynamic_img_pad,
             pretrained_strict=False,
         )
-    assert satisfies_protocol(vit, TimmViT)
+    assert satisfies_protocol(vit, TimmStyleViTGetIntermediates)
+
+    vit = _maybe_apply_mods_and_load_checkpoint(vit, cfg)
+    vit = vit.to(dtype=cfg.dtype)
+
+    return vit
+
+def create_timmfwd_backbone(cfg: BackboneConfig) -> TimmStyleViTForwardIntermediates:
+    model_identifier = ARCHS_TO_TIMM_IDS[cfg.model_arch]
+    if "sam" in model_identifier or "conv" in model_identifier:
+        vit = create_model(
+            model_identifier,
+            pretrained=cfg.pretrained,
+        )
+        vit.num_prefix_tokens = 0
+    else:
+        vit = create_model(
+            model_identifier,
+            pretrained=cfg.pretrained,
+            dynamic_img_size=cfg.dynamic_img_size,
+            dynamic_img_pad=cfg.dynamic_img_pad,
+            pretrained_strict=False,
+        )
+    assert satisfies_protocol(vit, TimmStyleViTForwardIntermediates)
 
     vit = _maybe_apply_mods_and_load_checkpoint(vit, cfg)
     vit = vit.to(dtype=cfg.dtype)
@@ -107,11 +133,11 @@ def create_timm_backbone(cfg: BackboneConfig) -> TimmViT:
     return vit
 
 
-def create_local_backbone(cfg: BackboneConfig) -> Dv3ViT:
+def create_local_backbone(cfg: BackboneConfig) -> Dv3StyleViT:
     model_identifier = ARCHS_TO_LOCAL_IDS[cfg.model_arch]
 
     vit = torch.hub.load(cfg.model_conf_path, model_identifier, source="local", pretrained=cfg.pretrained)
-    assert satisfies_protocol(vit, Dv3ViT)
+    assert satisfies_protocol(vit, Dv3StyleViT)
 
     vit = _maybe_apply_mods_and_load_checkpoint(vit, cfg)
     vit = vit.to(dtype=cfg.dtype)
@@ -120,7 +146,7 @@ def create_local_backbone(cfg: BackboneConfig) -> Dv3ViT:
 
 
 class BackboneRegistry:
-    _registry: Dict[str, Callable[[BackboneConfig], ViTBackbone]] = {}
+    _registry: dict[str, Callable[[BackboneConfig], ViTBackbone]] = {}
 
     @classmethod
     def register(cls, backbone_type: str, builder_fn: Callable[[BackboneConfig], ViTBackbone]) -> None:
@@ -136,12 +162,13 @@ class BackboneRegistry:
 
 
 # Register the default timm backbone builder
-BackboneRegistry.register("timm", create_timm_backbone)
+BackboneRegistry.register("timm", create_timmget_backbone)
+BackboneRegistry.register("timm_fwd", create_timmfwd_backbone)
 BackboneRegistry.register("torch_hub", create_local_backbone)
 
 
 class WrapperRegistry:
-    _registry: Dict[str, WrapperConfig] = {}
+    _registry: dict[str, WrapperConfig] = {}
 
     @classmethod
     def register(cls, name: str, cfg: WrapperConfig) -> None:

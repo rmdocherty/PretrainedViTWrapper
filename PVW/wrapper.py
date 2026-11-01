@@ -1,10 +1,19 @@
 import torch
+from PIL import Image
 from torch import Tensor
 from torch.nn import Module
-from PIL import Image
 
+from PVW.types import TimmStyleViTForwardIntermediates
+
+from .types import (
+    Architectures,
+    Dv3StyleViT,
+    ImageTransform,
+    TimmStyleViTGetIntermediates,
+    ViTBackbone,
+    satisfies_protocol,
+)
 from .utils import closest_resize, logger
-from .types import ViTBackbone, Architectures, ImageTransform, TimmViT, satisfies_protocol, Dv3ViT
 
 
 class PretrainedViTWrapper(Module):
@@ -58,9 +67,10 @@ class PretrainedViTWrapper(Module):
 
     @property
     def num_prefix_tokens(self) -> int:
-        if satisfies_protocol(self.vit, TimmViT):
+        is_timm = satisfies_protocol(self.vit, TimmStyleViTGetIntermediates) or satisfies_protocol(self.vit, TimmStyleViTForwardIntermediates)
+        if is_timm:
             return self.vit.num_prefix_tokens
-        elif satisfies_protocol(self.vit, Dv3ViT):
+        elif satisfies_protocol(self.vit, Dv3StyleViT):
             return self.vit.n_storage_tokens
         else:
             return 0
@@ -109,11 +119,27 @@ class PretrainedViTWrapper(Module):
         raise TypeError(f"Unsupported input type: {type(x)}")
 
     def _get_tokens_per_dim(self, x: Tensor) -> tuple[int, int]:
-        b, _, h, w = x.shape
+        _b, _, h, w = x.shape
         p = self.patch_size
         s = self.stride
         n_patch_h, n_patch_w = (h - p[0]) // s[0] + 1, (w - p[1]) // s[1] + 1
         return n_patch_h, n_patch_w
+
+    def _handle_reshape_outputs(
+        self,
+        f: Tensor,
+        n_patch_h: int,
+        n_patch_w: int,
+        make_2D: bool,
+        strip_prefix: bool = False,
+    ) -> Tensor:
+        if f.ndim == 4:
+            return f if make_2D else f.flatten(2)
+
+        if strip_prefix:
+            f = f[:, self.num_prefix_tokens :]
+        f = f.permute(0, 2, 1)
+        return f.view(f.shape[0], self.embed_dim, n_patch_h, n_patch_w) if make_2D else f
 
     def forward(self, x: Tensor | Image.Image | list[Image.Image]) -> Tensor:
         x_tensor = self.preprocess_input(x)
@@ -133,20 +159,18 @@ class PretrainedViTWrapper(Module):
         norm: bool = True,
     ) -> list[Tensor]:
         x_tensor = self.preprocess_input(x)
-        b, _, _, _ = x_tensor.shape
         n_patch_h, n_patch_w = self._get_tokens_per_dim(x_tensor)
 
-        if satisfies_protocol(self.vit, TimmViT):
+        if satisfies_protocol(self.vit, TimmStyleViTGetIntermediates) or satisfies_protocol(self.vit, Dv3StyleViT):
             feats = self.vit.get_intermediate_layers(x_tensor, n=n, reshape=False, norm=norm)
-        elif satisfies_protocol(self.vit, Dv3ViT):
-            feats = self.vit.get_intermediate_layers(x_tensor, n=n, reshape=False, norm=norm)
+        elif satisfies_protocol(self.vit, TimmStyleViTForwardIntermediates):
+            feats = self.vit.forward_intermediates(
+                x_tensor, indices=n, norm=norm, output_fmt="NCHW", intermediates_only=True
+            )
         else:
             raise TypeError(f"Unsupported ViT type: {type(self.vit)}")
 
-        feats = [f.permute(0, 2, 1) for f in feats]
-
-        if make_2D:
-            feats = [f.view(b, self.embed_dim, n_patch_h, n_patch_w) for f in feats]
+        feats = [self._handle_reshape_outputs(f, n_patch_h, n_patch_w, make_2D) for f in feats]
 
         logger.info(
             "Forward Intermediates: x: [%s] -> f: %s",
@@ -173,21 +197,18 @@ class PretrainedViTWrapper(Module):
             Tensor: [B,C,N] or [B,C,H,W] (if `make_2D=True`) features for `x`
         """
         x_tensor = self.preprocess_input(x)
-        b, _, _, _ = x_tensor.shape
         n_patch_h, n_patch_w = self._get_tokens_per_dim(x_tensor)
 
-        if satisfies_protocol(self.vit, TimmViT):
+        is_timm = satisfies_protocol(self.vit, TimmStyleViTGetIntermediates) or satisfies_protocol(self.vit, TimmStyleViTForwardIntermediates)
+        if is_timm:
             feats = self.vit.forward_features(x_tensor)
-            feats = feats[:, self.num_prefix_tokens :]
-        elif satisfies_protocol(self.vit, Dv3ViT):
+        elif satisfies_protocol(self.vit, Dv3StyleViT):
             # dv3 returns dict; x_norm_patchtokens already strips prefix tokens
             feats = self.vit.forward_features(x_tensor)["x_norm_patchtokens"]
         else:
             raise TypeError(f"Unsupported ViT type: {type(self.vit)}")
-        feats = feats.permute(0, 2, 1)
 
-        if make_2D:
-            feats = feats.view(b, self.embed_dim, n_patch_h, n_patch_w)
+        feats = self._handle_reshape_outputs(feats, n_patch_h, n_patch_w, make_2D, strip_prefix=is_timm)
 
         logger.info(
             "Forward Features: x: [%s] -> f: [%s]",

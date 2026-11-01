@@ -1,8 +1,16 @@
-from torch import Tensor
-from torch.nn import Parameter, Sequential
 from types import MethodType
 
-from .types import HasPatchEmbed, HasBlock, TimmViT, Dv3ViT, satisfies_protocol, V
+from torch import Tensor
+from torch.nn import Parameter, Sequential
+
+from .types import (
+    Dv3StyleViT,
+    HasBlock,
+    HasPatchEmbed,
+    TimmStyleViTGetIntermediates,
+    V,
+    satisfies_protocol,
+)
 from .utils import logger
 
 
@@ -40,13 +48,13 @@ def replace_pos_embed(vit: V, new_pos_embed: Tensor | None, requires_grad: bool)
         vit (V): The ViT backbone to modify.
         new_pos_embed (Tensor): The new positional embedding to set.
     """
-    if satisfies_protocol(vit, TimmViT):
+    if satisfies_protocol(vit, TimmStyleViTGetIntermediates):
         if isinstance(new_pos_embed, Tensor):
             vit.pos_embed = Parameter(new_pos_embed, requires_grad=requires_grad)
         else:
             logger.info("Removed default pos. embed")
             vit.pos_embed = None
-    elif satisfies_protocol(vit, Dv3ViT):
+    elif satisfies_protocol(vit, Dv3StyleViT):
         vit.rope_embed = None
         logger.info("Removed RoPE pos. embed")
     return vit

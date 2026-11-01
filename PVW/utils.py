@@ -1,12 +1,11 @@
+import logging
+from sys import stdout
+from time import localtime, strftime
+from typing import Literal
+
 import numpy as np
 import torch
 from torchvision import transforms
-
-import logging
-from sys import stdout
-from time import strftime, localtime
-
-from typing import Literal
 
 
 def to_numpy(tensor: torch.Tensor) -> np.ndarray:
@@ -80,7 +79,7 @@ def _minmax_scale(x: torch.Tensor) -> torch.Tensor:
     return (x - min_val) / (max_val - min_val + 1e-8)
 
 
-NormType = Literal["minmax", "std", None]
+NormType = Literal["minmax", "std"] | None
 
 
 def do_pca(

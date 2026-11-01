@@ -1,9 +1,16 @@
 import os
+
 import pytest
 from torch import nn
 
-from PVW import BackboneRegistry, BackboneConfig
-from PVW.types import HasBlock, HasAttn, satisfies_protocol, TimmViT, Dv3ViT
+from PVW import BackboneConfig, BackboneRegistry
+from PVW.types import (
+    Dv3StyleViT,
+    HasAttn,
+    HasBlock,
+    TimmStyleViTGetIntermediates,
+    satisfies_protocol,
+)
 
 
 def test_satisfies_protocol_non_vit():
@@ -13,9 +20,9 @@ def test_satisfies_protocol_non_vit():
     basic_module = nn.Module()
 
     # None of these should satisfy the ViTBackbone protocol
-    assert not satisfies_protocol(linear, TimmViT)
-    assert not satisfies_protocol(conv, TimmViT)
-    assert not satisfies_protocol(basic_module, TimmViT)
+    assert not satisfies_protocol(linear, TimmStyleViTGetIntermediates)
+    assert not satisfies_protocol(conv, TimmStyleViTGetIntermediates)
+    assert not satisfies_protocol(basic_module, TimmStyleViTGetIntermediates)
 
 
 def test_satisfies_protocol_vit():
@@ -28,7 +35,7 @@ def test_satisfies_protocol_vit():
     vit = BackboneRegistry.build(cfg)
 
     # The created backbone should satisfy the ViTBackbone protocol
-    assert satisfies_protocol(vit, TimmViT)
+    assert satisfies_protocol(vit, TimmStyleViTGetIntermediates)
 
 
 def test_satisfies_protocol_blocks_and_attn():
@@ -74,7 +81,7 @@ def test_load_local_dinov3_no_weights():
         checkpoint_path=None,
     )
     vit = BackboneRegistry.build(cfg)
-    assert satisfies_protocol(vit, Dv3ViT)
+    assert satisfies_protocol(vit, Dv3StyleViT)
 
 
 @pytest.mark.skipif(EUPE_DIR_MISSING, reason="models/EUPE directory is missing")
@@ -86,7 +93,7 @@ def test_load_local_eupe_no_weights():
         checkpoint_path=None,
     )
     vit = BackboneRegistry.build(cfg)
-    assert satisfies_protocol(vit, Dv3ViT)
+    assert satisfies_protocol(vit, Dv3StyleViT)
 
 
 @pytest.mark.skipif(EUPE_CKPT_MISSING, reason="models/EUPE or checkpoint is missing")
@@ -98,7 +105,7 @@ def test_load_local_eupe_with_weights():
         checkpoint_path=EUPE_CKPT,
     )
     vit = BackboneRegistry.build(cfg)
-    assert satisfies_protocol(vit, Dv3ViT)
+    assert satisfies_protocol(vit, Dv3StyleViT)
 
 
 @pytest.mark.skipif(DINOV3_DIR_MISSING, reason="models/dinov3 directory is missing")

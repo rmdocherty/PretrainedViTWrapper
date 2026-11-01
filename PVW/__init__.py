@@ -1,22 +1,27 @@
-from .wrapper import PretrainedViTWrapper
 from .factory import (
-    WrapperRegistry,
-    BackboneRegistry,
     BackboneConfig,
+    BackboneRegistry,
     WrapperConfig,
+    WrapperRegistry,
 )
-from .types import ImageTransform, TimmViT, Dv3ViT, satisfies_protocol
+from .types import (
+    Dv3StyleViT,
+    ImageTransform,
+    TimmStyleViTGetIntermediates,
+    satisfies_protocol,
+)
 from .utils import do_pca
+from .wrapper import PretrainedViTWrapper
 
 __all__ = [
-    "PretrainedViTWrapper",
-    "WrapperRegistry",
-    "BackboneRegistry",
     "BackboneConfig",
-    "WrapperConfig",
+    "BackboneRegistry",
+    "Dv3StyleViT",
     "ImageTransform",
-    "TimmViT",
-    "Dv3ViT",
-    "satisfies_protocol",
+    "PretrainedViTWrapper",
+    "TimmStyleViTGetIntermediates",
+    "WrapperConfig",
+    "WrapperRegistry",
     "do_pca",
+    "satisfies_protocol",
 ]
