@@ -1,4 +1,3 @@
-from PVW.types import TimmStyleViTForwardIntermediates
 from collections.abc import Callable
 from dataclasses import dataclass, field, fields, replace
 from functools import partial
@@ -7,6 +6,8 @@ from typing import Any, Literal
 
 import torch
 from timm import create_model
+
+from PVW.types import TimmStyleViTForwardIntermediates
 
 from .modifications import change_stride, replace_pos_embed
 from .types import (

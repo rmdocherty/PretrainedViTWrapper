@@ -16,7 +16,7 @@ from .wrapper import PretrainedViTWrapper
 __all__ = [
     "BackboneConfig",
     "BackboneRegistry",
-    "Dv3ViT",
+    "Dv3StyleViT",
     "ImageTransform",
     "PretrainedViTWrapper",
     "TimmStyleViTGetIntermediates",

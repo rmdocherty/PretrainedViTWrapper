@@ -5,7 +5,7 @@ from torch import nn
 
 from PVW import BackboneConfig, BackboneRegistry
 from PVW.types import (
-    Dv3ViT,
+    Dv3StyleViT,
     HasAttn,
     HasBlock,
     TimmStyleViTGetIntermediates,
@@ -81,7 +81,7 @@ def test_load_local_dinov3_no_weights():
         checkpoint_path=None,
     )
     vit = BackboneRegistry.build(cfg)
-    assert satisfies_protocol(vit, Dv3ViT)
+    assert satisfies_protocol(vit, Dv3StyleViT)
 
 
 @pytest.mark.skipif(EUPE_DIR_MISSING, reason="models/EUPE directory is missing")
@@ -93,7 +93,7 @@ def test_load_local_eupe_no_weights():
         checkpoint_path=None,
     )
     vit = BackboneRegistry.build(cfg)
-    assert satisfies_protocol(vit, Dv3ViT)
+    assert satisfies_protocol(vit, Dv3StyleViT)
 
 
 @pytest.mark.skipif(EUPE_CKPT_MISSING, reason="models/EUPE or checkpoint is missing")
@@ -105,7 +105,7 @@ def test_load_local_eupe_with_weights():
         checkpoint_path=EUPE_CKPT,
     )
     vit = BackboneRegistry.build(cfg)
-    assert satisfies_protocol(vit, Dv3ViT)
+    assert satisfies_protocol(vit, Dv3StyleViT)
 
 
 @pytest.mark.skipif(DINOV3_DIR_MISSING, reason="models/dinov3 directory is missing")
