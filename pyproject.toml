@@ -27,11 +27,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pytest",
-  "matplotlib"
-]
-models = [
-  "torchmetrics",
-  "termcolor"
+  "matplotlib",
+  "ruff"
 ]
 
 [project.urls]

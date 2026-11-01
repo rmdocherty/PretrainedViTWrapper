@@ -1,10 +1,19 @@
-from torch import Tensor
-from torchvision.transforms import Compose
-from torch.nn import Parameter, Module, Sequential, Linear, Dropout, Conv2d
 import logging
+from collections.abc import Callable
+from typing import (
+    Any,
+    Concatenate,
+    Literal,
+    ParamSpec,
+    Protocol,
+    TypeGuard,
+    TypeVar,
+    cast,
+)
 
-from typing import Any, Union, Protocol, Literal, ParamSpec, Concatenate, Callable, TypeVar, Type, TypeGuard, cast
-
+from torch import Tensor
+from torch.nn import Conv2d, Dropout, Linear, Module, Parameter, Sequential
+from torchvision.transforms import Compose
 
 P = ParamSpec("P")
 ImageTransform = Callable[Concatenate[int, int, P], Compose]
@@ -19,7 +28,7 @@ T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
 
-def satisfies_protocol(obj: object, protocol_cls: Type[T], verbose: bool = False) -> TypeGuard[T]:
+def satisfies_protocol(obj: object, protocol_cls: type[T], verbose: bool = True) -> TypeGuard[T]:
     """Runtime check if an object implements the structural interface of a Protocol class."""
     protocol_attrs = getattr(protocol_cls, "__protocol_attrs__", None)
     if protocol_attrs is None:
@@ -27,6 +36,7 @@ def satisfies_protocol(obj: object, protocol_cls: Type[T], verbose: bool = False
     attrs = cast(tuple[str, ...], protocol_attrs)
     missing_attrs = [attr for attr in attrs if not hasattr(obj, attr)]
     if missing_attrs:
+        print(dir(obj))
         if verbose:
             logger.warning(
                 "%s doesn't satisfy %s; missing: %s",
@@ -128,7 +138,8 @@ class TimmViT(BaseViTMixin, Protocol):
     def to(self, *args: Any, **kwargs: Any) -> "TimmViT": ...
 
 
-class Dv3ViT(BaseViTMixin, Protocol):
+
+class Dv3StyleViT(BaseViTMixin, Protocol):
     # Model constants
     n_storage_tokens: int
 
@@ -146,17 +157,17 @@ class Dv3ViT(BaseViTMixin, Protocol):
     def get_intermediate_layers(
         self,
         x: Tensor,
-        n: Union[int, list[int], tuple[int]] = 1,
+        n: int | list[int] | tuple[int] = 1,
         reshape: bool = False,
         return_prefix_tokens: bool = False,
         return_extra_tokens: bool = False,
         norm: bool = False,
     ) -> tuple[Tensor | tuple[Tensor, ...]]: ...
 
-    def to(self, *args: Any, **kwargs: Any) -> "Dv3ViT": ...
+    def to(self, *args: Any, **kwargs: Any) -> "Dv3StyleViT": ...
 
 
-ViTBackbone = TimmViT | Dv3ViT
+ViTBackbone = TimmViT | Dv3StyleViT
 
 V = TypeVar("V", bound=ViTBackbone)
 J = ParamSpec("J")

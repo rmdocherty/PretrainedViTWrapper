@@ -1,17 +1,23 @@
 import os
-import torch
-import pytest
-
-from torchvision import transforms
-from PIL import Image, ImageDraw
 
 # Set matplotlib backend to non-interactive 'Agg' before importing pyplot
 import matplotlib
+import pytest
+import torch
+from PIL import Image, ImageDraw
+from torchvision import transforms
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from PVW import WrapperRegistry, PretrainedViTWrapper, WrapperConfig, BackboneConfig, BackboneRegistry, do_pca
+from PVW import (
+    BackboneConfig,
+    BackboneRegistry,
+    PretrainedViTWrapper,
+    WrapperConfig,
+    WrapperRegistry,
+    do_pca,
+)
 from PVW.utils import closest_resize
 
 
@@ -70,7 +76,7 @@ def test_dinov2_wrapper_with_pil_and_pca():
     # Scale pca_np to [0, 1] range for plotting
     pca_np = (pca_np - pca_np.min()) / (pca_np.max() - pca_np.min() + 1e-8)
 
-    fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+    _fig, axes = plt.subplots(1, 2, figsize=(8, 4))
     axes[0].imshow(pil_img)
     axes[0].set_title("Input Image")
     axes[0].axis("off")

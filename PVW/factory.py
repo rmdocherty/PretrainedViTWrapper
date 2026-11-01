@@ -1,23 +1,24 @@
+from collections.abc import Callable
+from dataclasses import dataclass, field, fields, replace
+from functools import partial
+from inspect import Parameter, signature
+from typing import Any, Literal
+
 import torch
 from timm import create_model
 
-from dataclasses import dataclass, field, fields, replace
-from inspect import signature, Parameter
-from typing import Literal, Type, Callable, Any, Dict
-from functools import partial
-
+from .modifications import change_stride, replace_pos_embed
 from .types import (
-    Architectures,
+    ARCHS_TO_LOCAL_IDS,
     ARCHS_TO_TIMM_IDS,
-    ViTBackbone,
+    Architectures,
+    Dv3ViT,
     ImageTransform,
     ModificationFn,
-    satisfies_protocol,
-    ARCHS_TO_LOCAL_IDS,
     TimmViT,
-    Dv3ViT,
+    ViTBackbone,
+    satisfies_protocol,
 )
-from .modifications import change_stride, replace_pos_embed
 from .utils import closest_resize, logger
 from .wrapper import PretrainedViTWrapper
 
@@ -46,8 +47,8 @@ class BackboneConfig:
 @dataclass
 class WrapperConfig:
     backbone_cfg: BackboneConfig
-    wrapper_class: Type[PretrainedViTWrapper] = PretrainedViTWrapper
-    wrapper_kwargs: Dict[str, Any] = field(default_factory=dict)
+    wrapper_class: type[PretrainedViTWrapper] = PretrainedViTWrapper
+    wrapper_kwargs: dict[str, Any] = field(default_factory=dict)
     transform: ImageTransform = closest_resize
     dtype: torch.dtype = torch.float32
 
@@ -120,7 +121,7 @@ def create_local_backbone(cfg: BackboneConfig) -> Dv3ViT:
 
 
 class BackboneRegistry:
-    _registry: Dict[str, Callable[[BackboneConfig], ViTBackbone]] = {}
+    _registry: dict[str, Callable[[BackboneConfig], ViTBackbone]] = {}
 
     @classmethod
     def register(cls, backbone_type: str, builder_fn: Callable[[BackboneConfig], ViTBackbone]) -> None:
@@ -141,7 +142,7 @@ BackboneRegistry.register("torch_hub", create_local_backbone)
 
 
 class WrapperRegistry:
-    _registry: Dict[str, WrapperConfig] = {}
+    _registry: dict[str, WrapperConfig] = {}
 
     @classmethod
     def register(cls, name: str, cfg: WrapperConfig) -> None:

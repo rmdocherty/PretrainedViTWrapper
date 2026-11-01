@@ -1,10 +1,17 @@
 import torch
+from PIL import Image
 from torch import Tensor
 from torch.nn import Module
-from PIL import Image
 
+from .types import (
+    Architectures,
+    Dv3ViT,
+    ImageTransform,
+    TimmViT,
+    ViTBackbone,
+    satisfies_protocol,
+)
 from .utils import closest_resize, logger
-from .types import ViTBackbone, Architectures, ImageTransform, TimmViT, satisfies_protocol, Dv3ViT
 
 
 class PretrainedViTWrapper(Module):
@@ -109,7 +116,7 @@ class PretrainedViTWrapper(Module):
         raise TypeError(f"Unsupported input type: {type(x)}")
 
     def _get_tokens_per_dim(self, x: Tensor) -> tuple[int, int]:
-        b, _, h, w = x.shape
+        _b, _, h, w = x.shape
         p = self.patch_size
         s = self.stride
         n_patch_h, n_patch_w = (h - p[0]) // s[0] + 1, (w - p[1]) // s[1] + 1
@@ -136,9 +143,7 @@ class PretrainedViTWrapper(Module):
         b, _, _, _ = x_tensor.shape
         n_patch_h, n_patch_w = self._get_tokens_per_dim(x_tensor)
 
-        if satisfies_protocol(self.vit, TimmViT):
-            feats = self.vit.get_intermediate_layers(x_tensor, n=n, reshape=False, norm=norm)
-        elif satisfies_protocol(self.vit, Dv3ViT):
+        if satisfies_protocol(self.vit, TimmViT) or satisfies_protocol(self.vit, Dv3ViT):
             feats = self.vit.get_intermediate_layers(x_tensor, n=n, reshape=False, norm=norm)
         else:
             raise TypeError(f"Unsupported ViT type: {type(self.vit)}")

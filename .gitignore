@@ -220,3 +220,5 @@ __marimo__/
 tests/data/
 tests/out/
 models/
+.vscode
+tmp/

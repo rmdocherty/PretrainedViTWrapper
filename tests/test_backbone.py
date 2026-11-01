@@ -1,9 +1,10 @@
 import os
+
 import pytest
 from torch import nn
 
-from PVW import BackboneRegistry, BackboneConfig
-from PVW.types import HasBlock, HasAttn, satisfies_protocol, TimmViT, Dv3ViT
+from PVW import BackboneConfig, BackboneRegistry
+from PVW.types import Dv3ViT, HasAttn, HasBlock, TimmViT, satisfies_protocol
 
 
 def test_satisfies_protocol_non_vit():

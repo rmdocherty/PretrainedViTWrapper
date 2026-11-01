@@ -3,11 +3,11 @@ import torch
 from torch import nn
 
 from PVW import (
-    WrapperRegistry,
-    BackboneRegistry,
     BackboneConfig,
-    WrapperConfig,
+    BackboneRegistry,
     PretrainedViTWrapper,
+    WrapperConfig,
+    WrapperRegistry,
 )
 from PVW.types import ViTBackbone
 

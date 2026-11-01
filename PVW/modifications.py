@@ -1,8 +1,9 @@
-from torch import Tensor
-from torch.nn import Parameter, Sequential
 from types import MethodType
 
-from .types import HasPatchEmbed, HasBlock, TimmViT, Dv3ViT, satisfies_protocol, V
+from torch import Tensor
+from torch.nn import Parameter, Sequential
+
+from .types import Dv3ViT, HasBlock, HasPatchEmbed, TimmViT, V, satisfies_protocol
 from .utils import logger
 
 
