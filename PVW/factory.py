@@ -13,6 +13,7 @@ from .modifications import change_stride, replace_pos_embed
 from .types import (
     ARCHS_TO_LOCAL_IDS,
     ARCHS_TO_TIMM_IDS,
+    ARCHS_TO_TIMMFWD_IDS,
     Architectures,
     Dv3StyleViT,
     ImageTransform,
@@ -110,7 +111,7 @@ def create_timmget_backbone(cfg: BackboneConfig) -> TimmStyleViTGetIntermediates
     return vit
 
 def create_timmfwd_backbone(cfg: BackboneConfig) -> TimmStyleViTForwardIntermediates:
-    model_identifier = ARCHS_TO_TIMM_IDS[cfg.model_arch]
+    model_identifier = ARCHS_TO_TIMMFWD_IDS[cfg.model_arch]
     if "sam" in model_identifier or "conv" in model_identifier:
         vit = create_model(
             model_identifier,
@@ -184,6 +185,13 @@ class WrapperRegistry:
                     name,
                     WrapperConfig(
                         backbone_cfg=BackboneConfig(backbone_type="timm", model_arch=name)  # type: ignore
+                    ),
+                )
+            elif name in ARCHS_TO_TIMMFWD_IDS:
+                cls.register(
+                    name,
+                    WrapperConfig(
+                        backbone_cfg=BackboneConfig(backbone_type="timm_fwd", model_arch=name)  # type: ignore
                     ),
                 )
             else:

@@ -239,13 +239,14 @@ ARCHS_TO_TIMM_IDS: dict[Architectures, str] = {
     "mae_b": "vit_base_patch16_224.mae",
     "in1k_b": "vit_base_patch16_clip_224.laion2b_ft_in12k_in1k",
     "deit_s": "deit3_small_patch16_224.fb_in1k",
-    "sam_b": "samvit_base_patch16.sa1b",
     "clip_b": "vit_base_patch16_clip_224.openai",
-    "eva02_b": "eva02_base_patch14_224.mim_in22k",
     "convnext": "convnextv2_tiny.fcmae",
     "vit_t_in": "tiny_vit_5m_224.dist_in22k_ft_in1k",
 }
-
+ARCHS_TO_TIMMFWD_IDS: dict[Architectures, str] = {
+    "sam_b": "samvit_base_patch16.sa1b",
+    "eva02_b": "eva02_base_patch14_224.mim_in22k",
+}
 ARCHS_TO_LOCAL_IDS: dict[Architectures, str] = {
     "dinov3_s": "dinov3_vits16",
     "dinov3_s+": "dinov3_vits16plus",
