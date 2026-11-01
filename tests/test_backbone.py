@@ -4,7 +4,13 @@ import pytest
 from torch import nn
 
 from PVW import BackboneConfig, BackboneRegistry
-from PVW.types import Dv3ViT, HasAttn, HasBlock, TimmViT, satisfies_protocol
+from PVW.types import (
+    Dv3ViT,
+    HasAttn,
+    HasBlock,
+    TimmStyleViTGetIntermediates,
+    satisfies_protocol,
+)
 
 
 def test_satisfies_protocol_non_vit():
@@ -14,9 +20,9 @@ def test_satisfies_protocol_non_vit():
     basic_module = nn.Module()
 
     # None of these should satisfy the ViTBackbone protocol
-    assert not satisfies_protocol(linear, TimmViT)
-    assert not satisfies_protocol(conv, TimmViT)
-    assert not satisfies_protocol(basic_module, TimmViT)
+    assert not satisfies_protocol(linear, TimmStyleViTGetIntermediates)
+    assert not satisfies_protocol(conv, TimmStyleViTGetIntermediates)
+    assert not satisfies_protocol(basic_module, TimmStyleViTGetIntermediates)
 
 
 def test_satisfies_protocol_vit():
@@ -29,7 +35,7 @@ def test_satisfies_protocol_vit():
     vit = BackboneRegistry.build(cfg)
 
     # The created backbone should satisfy the ViTBackbone protocol
-    assert satisfies_protocol(vit, TimmViT)
+    assert satisfies_protocol(vit, TimmStyleViTGetIntermediates)
 
 
 def test_satisfies_protocol_blocks_and_attn():

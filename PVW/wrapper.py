@@ -5,9 +5,9 @@ from torch.nn import Module
 
 from .types import (
     Architectures,
-    Dv3ViT,
+    Dv3StyleViT,
     ImageTransform,
-    TimmViT,
+    TimmStyleViTGetIntermediates,
     ViTBackbone,
     satisfies_protocol,
 )
@@ -65,9 +65,9 @@ class PretrainedViTWrapper(Module):
 
     @property
     def num_prefix_tokens(self) -> int:
-        if satisfies_protocol(self.vit, TimmViT):
+        if satisfies_protocol(self.vit, TimmStyleViTGetIntermediates):
             return self.vit.num_prefix_tokens
-        elif satisfies_protocol(self.vit, Dv3ViT):
+        elif satisfies_protocol(self.vit, Dv3StyleViT):
             return self.vit.n_storage_tokens
         else:
             return 0
@@ -143,7 +143,7 @@ class PretrainedViTWrapper(Module):
         b, _, _, _ = x_tensor.shape
         n_patch_h, n_patch_w = self._get_tokens_per_dim(x_tensor)
 
-        if satisfies_protocol(self.vit, TimmViT) or satisfies_protocol(self.vit, Dv3ViT):
+        if satisfies_protocol(self.vit, TimmStyleViTGetIntermediates) or satisfies_protocol(self.vit, Dv3StyleViT):
             feats = self.vit.get_intermediate_layers(x_tensor, n=n, reshape=False, norm=norm)
         else:
             raise TypeError(f"Unsupported ViT type: {type(self.vit)}")
@@ -181,10 +181,10 @@ class PretrainedViTWrapper(Module):
         b, _, _, _ = x_tensor.shape
         n_patch_h, n_patch_w = self._get_tokens_per_dim(x_tensor)
 
-        if satisfies_protocol(self.vit, TimmViT):
+        if satisfies_protocol(self.vit, TimmStyleViTGetIntermediates):
             feats = self.vit.forward_features(x_tensor)
             feats = feats[:, self.num_prefix_tokens :]
-        elif satisfies_protocol(self.vit, Dv3ViT):
+        elif satisfies_protocol(self.vit, Dv3StyleViT):
             # dv3 returns dict; x_norm_patchtokens already strips prefix tokens
             feats = self.vit.forward_features(x_tensor)["x_norm_patchtokens"]
         else:

@@ -108,7 +108,7 @@ class BaseViTMixin(Protocol):
     def load_state_dict(self, state_dict: dict[str, Any], strict: bool = True) -> Any: ...
 
 
-class TimmViT(BaseViTMixin, Protocol):
+class TimmStyleViTGetIntermediates(BaseViTMixin, Protocol):
     # Model constants
     num_features: int
 
@@ -135,7 +135,38 @@ class TimmViT(BaseViTMixin, Protocol):
         attn_mask: Tensor | None = None,
     ) -> list[Tensor]: ...
 
-    def to(self, *args: Any, **kwargs: Any) -> "TimmViT": ...
+    def to(self, *args: Any, **kwargs: Any) -> "TimmStyleViTGetIntermediates": ...
+
+
+class TimmStyleViTForwardIntermediates(BaseViTMixin, Protocol):
+    # Model constants
+    num_features: int
+
+    num_prefix_tokens: int
+
+    # Layers
+    pos_embed: Parameter | None
+
+    # Methods
+    def forward_features(
+        self,
+        x: Tensor,
+        attn_mask: Tensor | None = None,
+        is_causal: bool = False,
+    ) -> Tensor: ...
+
+    def forward_intermediates(
+        self,
+        x: Tensor,
+        indices: int | list[int] | tuple[int] | None = None,
+        norm: bool = False,
+        stop_early: bool = False,
+        output_fmt: str = 'NCHW',
+        intermediates_only: bool = False,
+    ) -> list[Tensor]: ...
+
+    def to(self, *args: Any, **kwargs: Any) -> "TimmStyleViTForwardIntermediates": ...
+
 
 
 
@@ -167,7 +198,7 @@ class Dv3StyleViT(BaseViTMixin, Protocol):
     def to(self, *args: Any, **kwargs: Any) -> "Dv3StyleViT": ...
 
 
-ViTBackbone = TimmViT | Dv3StyleViT
+ViTBackbone = TimmStyleViTGetIntermediates | TimmStyleViTForwardIntermediates | Dv3StyleViT
 
 V = TypeVar("V", bound=ViTBackbone)
 J = ParamSpec("J")
