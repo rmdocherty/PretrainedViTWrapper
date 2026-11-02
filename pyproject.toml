@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "PretrainedViTWrapper"
-version = "0.0.4"
+version = "0.0.5"
 authors = [
   { name="Ronan Docherty", email="ronan.docherty18@imperial.ac.uk"},
 ]
